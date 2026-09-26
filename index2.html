@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A Little Sparkle For You ✨</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Playfair+Display:ital,wght@0,500;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Canvas Confetti & Lucide Icons -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['"Playfair Display"', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            handwritten: ['"Caveat"', 'cursive'],
+          },
+          colors: {
+            warmCream: '#FFFDF9',
+            warmSand: '#F9F5F0',
+            warmBlush: '#FCEFE9',
+            roseGold: '#D48166',
+            softRose: '#EAA99B',
+            deepCharcoal: '#2D282A',
+            softMuted: '#6B6265',
+            glowAmber: '#F7D08A',
+            waGreen: '#25D366'
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-10px)' },
+            },
+            pulseGlow: {
+              '0%, 100%': { boxShadow: '0 0 15px rgba(37, 211, 102, 0.4)' },
+              '50%': { boxShadow: '0 0 30px rgba(37, 211, 102, 0.8)' },
+            }
+          },
+          animation: {
+            float: 'float 5s ease-in-out infinite',
+            'pulse-glow': 'pulseGlow 2.5s infinite',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Smooth Scrolling */
+    html {
+      scroll-behavior: smooth;
+    }
+    
+    /* Background Canvas */
+    #ambient-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Glass Effect Utilities */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      box-shadow: 0 16px 40px -10px rgba(212, 129, 102, 0.08), 0 4px 12px rgba(0, 0, 0, 0.02);
+    }
+    
+    .glass-pill {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(247, 208, 138, 0.5);
+    }
+
+    /* Polaroid Styles */
+    .polaroid {
+      background: #FFFFFF;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .polaroid:hover {
+      transform: translateY(-8px) scale(1.03) rotate(0deg) !important;
+      box-shadow: 0 20px 45px rgba(212, 129, 102, 0.2);
+      z-index: 20;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F9F5F0;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #EAA99B;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="bg-warmSand text-deepCharcoal font-sans antialiased overflow-x-hidden relative selection:bg-softRose selection:text-white">
+
+  <canvas id="ambient-canvas"></canvas>
+
+  <!-- Top Navigation Bar -->
+  <header class="fixed top-4 left-0 right-0 z-40 px-4 max-w-4xl mx-auto flex items-center justify-between pointer-events-none">
+    <div class="pointer-events-auto">
+      <span class="glass-pill px-4 py-2 rounded-full text-xs font-semibold text-roseGold tracking-wider uppercase shadow-sm flex items-center gap-1.5">
+        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+        <span>Made For <span id="nav-recipient-name">Sophia</span></span>
+      </span>
+    </div>
+
+    <div class="pointer-events-auto flex items-center gap-2">
+      <!-- Ambient Audio Toggle -->
+      <button id="sound-btn" onclick="toggleSound()" class="glass-pill w-10 h-10 rounded-full flex items-center justify-center text-softMuted hover:text-roseGold transition-all duration-300 shadow-sm hover:scale-105" title="Toggle peaceful tone">
+        <i data-lucide="volume-x" id="sound-icon" class="w-4 h-4"></i>
+      </button>
+
+      <!-- Direct WhatsApp Jump -->
+      <a id="nav-wa-jump" href="#whatsapp-section" class="glass-pill px-3.5 py-2 rounded-full text-xs font-semibold text-deepCharcoal hover:text-waGreen transition-all duration-300 shadow-sm flex items-center gap-1.5 hover:scale-105">
+        <i data-lucide="message-circle" class="w-3.5 h-3.5 text-waGreen"></i>
+        <span>Say Hi</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="relative z-10 max-w-4xl mx-auto px-5 sm:px-8 pt-24 pb-20 space-y-24 sm:space-y-32">
+
+    <!-- HERO SECTION -->
+    <section class="min-h-[75vh] flex flex-col justify-center items-center text-center pt-8">
+      <!-- Gentle Badge -->
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-warmBlush/80 border border-softRose/40 text-roseGold text-xs sm:text-sm font-medium mb-6">
+        <span class="w-2 h-2 rounded-full bg-roseGold animate-ping"></span>
+        <span>A warm appreciation note</span>
+      </div>
+
+      <h1 class="font-serif text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-deepCharcoal leading-[1.15] mb-6">
+        Talking to you, <br class="hidden sm:inline" />
+        <span class="italic font-normal bg-gradient-to-r from-roseGold via-[#D97D64] to-[#C25953] bg-clip-text text-transparent underline decoration-glowAmber/60 decoration-wavy underline-offset-8" id="hero-recipient-name">
+          Sophia
+        </span>,
+        <br />is the easiest part of my day.
+      </h1>
+
+      <p class="max-w-xl text-base sm:text-lg text-softMuted leading-relaxed mb-8 font-light">
+        Not everyone brings an energy that effortlessly turns simple minutes into genuine smiles. You just happen to have that rare effect every single time we speak.
+      </p>
+
+      <div class="flex flex-col sm:flex-row items-center gap-4">
+        <a href="#playful-quiz" class="px-7 py-3.5 rounded-full bg-roseGold text-white font-medium shadow-lg shadow-roseGold/30 hover:bg-[#C56F54] transition-all transform hover:-translate-y-0.5 active:translate-y-0 text-sm flex items-center gap-2">
+          <span>A Few Playful Questions</span>
+          <i data-lucide="arrow-down" class="w-4 h-4"></i>
+        </a>
+        <a href="#photo-gallery" class="px-7 py-3.5 rounded-full glass-card text-deepCharcoal font-medium hover:border-roseGold/40 transition-all text-sm">
+          A Few Captures ✨
+        </a>
+      </div>
+
+      <div class="mt-16 animate-bounce text-softMuted/60">
+        <i data-lucide="chevron-down" class="w-6 h-6"></i>
+      </div>
+    </section>
+
+    <section id="playful-quiz" class="space-y-8 scroll-mt-24">
+      <div class="text-center max-w-lg mx-auto">
+        <span class="text-xs uppercase tracking-widest text-roseGold font-semibold">Completely Unbiased</span>
+        <h2 class="font-serif text-3xl sm:text-4xl font-bold mt-2 text-deepCharcoal">
+          A few pressing questions 😉
+        </h2>
+        <p class="text-sm text-softMuted mt-2">
+          Pick your answers carefully—the results are scientifically recorded!
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- Question Card 1: Time Distortion -->
+        <div class="glass-card p-6 sm:p-7 rounded-3xl relative overflow-hidden flex flex-col justify-between">
+          <div class="space-y-3">
+            <span class="w-9 h-9 rounded-2xl bg-warmBlush flex items-center justify-center text-roseGold font-bold text-sm">01</span>
+            <h3 class="text-lg font-bold text-deepCharcoal">
+              Why do our conversations make hours feel like minutes?
+            </h3>
+            <p class="text-xs text-softMuted leading-relaxed">
+              Every time we talk, the clock completely forgets how time works.
+            </p>
+          </div>
+
+          <div class="mt-6 space-y-2.5">
+            <button onclick="handleQuizAnswer(this, 'You really do bring that contagious good energy! ✨')" class="w-full text-left px-4 py-3 rounded-2xl text-xs sm:text-sm font-medium border border-roseGold/20 hover:border-roseGold bg-white/60 hover:bg-warmBlush/60 transition-all flex items-center justify-between group">
+              <span>A) You have an infectious happy vibe</span>
+              <span class="text-xs opacity-0 group-hover:opacity-100 text-roseGold transition-opacity">Guilty! 🌟</span>
+            </button>
+            <button onclick="handleQuizAnswer(this, 'Our banter really is undefeated! 💬')" class="w-full text-left px-4 py-3 rounded-2xl text-xs sm:text-sm font-medium border border-roseGold/20 hover:border-roseGold bg-white/60 hover:bg-warmBlush/60 transition-all flex items-center justify-between group">
+              <span>B) We have ridiculously good chemistry</span>
+              <span class="text-xs opacity-0 group-hover:opacity-100 text-roseGold transition-opacity">100% 🎯</span>
+            </button>
+            <button onclick="handleQuizAnswer(this, 'Bingo! Both without question 🏆')" class="w-full text-left px-4 py-3 rounded-2xl text-xs sm:text-sm font-medium border border-roseGold/20 hover:border-roseGold bg-white/60 hover:bg-warmBlush/60 transition-all flex items-center justify-between group">
+              <span>C) Definitely both A and B</span>
+              <span class="text-xs opacity-0 group-hover:opacity-100 text-roseGold transition-opacity">Correct answer! ✨</span>
+            </button>
+          </div>
+          <div class="quiz-feedback hidden mt-3 p-3 rounded-xl bg-warmBlush text-roseGold text-xs font-semibold text-center"></div>
+        </div>
+
+        <!-- Question Card 2: Runaway "Nope" button interactive -->
+        <div class="glass-card p-6 sm:p-7 rounded-3xl relative overflow-hidden flex flex-col justify-between">
+          <div class="space-y-3">
+            <span class="w-9 h-9 rounded-2xl bg-warmBlush flex items-center justify-center text-roseGold font-bold text-sm">02</span>
+            <h3 class="text-lg font-bold text-deepCharcoal">
+              Be honest: does seeing a text from me make you smile?
+            </h3>
+            <p class="text-xs text-softMuted leading-relaxed">
+              Choose your answer below with total honesty...
+            </p>
+          </div>
+
+          <div class="mt-6 flex flex-col sm:flex-row items-center gap-3 relative min-h-[90px] justify-center">
+            <!-- Definite Yes -->
+            <button onclick="handleSmileConfirm()" class="w-full sm:w-auto flex-1 px-5 py-3 rounded-2xl bg-roseGold text-white font-medium text-xs sm:text-sm shadow-md hover:bg-[#C56F54] transition-all flex items-center justify-center gap-2">
+              <i data-lucide="heart" class="w-4 h-4 fill-white"></i>
+              <span>Yes, every single time 😊</span>
+            </button>
+            
+            <!-- Playful Runaway Button -->
+            <button id="runaway-btn" onmouseover="dodgeButton(this)" onclick="dodgeButton(this)" class="w-full sm:w-auto px-5 py-3 rounded-2xl bg-white border border-gray-300 text-deepCharcoal font-medium text-xs sm:text-sm transition-all duration-200 select-none cursor-pointer">
+              <span>Nope, not at all</span>
+            </button>
+          </div>
+          <div id="smile-confirm-feedback" class="hidden mt-3 p-3 rounded-xl bg-warmBlush text-roseGold text-xs font-semibold text-center">
+            Knew it! And having you around makes my day twice as bright too! 🎉
+          </div>
+        </div>
+
+        <!-- Question Card 3: Smile Meter Slider -->
+        <div class="glass-card p-6 sm:p-7 rounded-3xl md:col-span-2 relative overflow-hidden">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <span class="text-xs uppercase tracking-wider text-roseGold font-semibold">Honesty Meter</span>
+              <h3 class="text-lg font-bold text-deepCharcoal mt-0.5">
+                On a scale of 10 to 10, how much are you smiling right now?
+              </h3>
+            </div>
+            <span id="slider-score-badge" class="px-4 py-1.5 rounded-full bg-roseGold/10 text-roseGold font-bold text-sm">
+              Level: 10 / 10 😊
+            </span>
+          </div>
+
+          <div class="mt-6 space-y-4">
+            <input type="range" id="smile-slider" min="1" max="10" value="10" 
+                   oninput="updateSmileSlider(this.value)"
+                   class="w-full h-2 bg-warmBlush rounded-lg appearance-none cursor-pointer accent-roseGold">
+            
+            <div class="flex justify-between text-xs text-softMuted font-medium">
+              <span>1 (Trying not to show it)</span>
+              <span>5 (A visible smirk)</span>
+              <span class="text-roseGold font-bold">10 (Full glowing smile ✨)</span>
+            </div>
+          </div>
+          
+          <div id="smile-reaction-text" class="mt-4 text-center text-xs sm:text-sm font-serif italic text-roseGold">
+            "Seeing you happy makes doing this 1000% worth it."
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <section id="photo-gallery" class="space-y-8 scroll-mt-24">
+      <div class="text-center max-w-lg mx-auto">
+        <span class="text-xs uppercase tracking-widest text-roseGold font-semibold">Visual Snaps</span>
+        <h2 class="font-serif text-3xl sm:text-4xl font-bold mt-2 text-deepCharcoal">
+          Moments & Captures
+        </h2>
+        <p class="text-sm text-softMuted mt-2">
+          Click any photo to see it up close.
+        </p>
+      </div>
+
+      <!-- Polaroid Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 pt-4">
+        
+        <!-- Polaroid 1 -->
+        <div class="polaroid p-4 rounded-xl cursor-pointer rotate-[-2deg]" onclick="openLightbox('https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80', 'That effortlessly bright smile ✨')">
+          <div class="aspect-[4/5] overflow-hidden rounded-lg bg-gray-100">
+            <img src="/img/WhatsApp Image 2026-09-26 at 8.05.28 PM.jpeg" 
+                 alt="Radiant smile" 
+                 class="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                 onerror="this.src='https://placehold.co/600x750/FCEFE9/D48166?text=Photo+1'">
+          </div>
+          <div class="pt-4 pb-1 text-center">
+            <p class="font-handwritten text-2xl text-deepCharcoal">That unforgettable smile ✨</p>
+            <span class="text-[10px] text-softMuted tracking-wider uppercase">Naturally radiant</span>
+          </div>
+        </div>
+
+        <!-- Polaroid 2 -->
+        <div class="polaroid p-4 rounded-xl cursor-pointer rotate-[2.5deg]" onclick="openLightbox('https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80', 'Pure positive vibes and spontaneous laughs 🌸')">
+          <div class="aspect-[4/5] overflow-hidden rounded-lg bg-gray-100">
+            <img src="/img/WhatsApp Image 2026-09-26 at 8.05.28 PM (2).jpeg" 
+                 alt="Joyful moment" 
+                 class="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                 onerror="this.src='https://placehold.co/600x750/FCEFE9/D48166?text=Photo+2'">
+          </div>
+          <div class="pt-4 pb-1 text-center">
+            <p class="font-handwritten text-2xl text-deepCharcoal">Pure positive vibes 🌸</p>
+            <span class="text-[10px] text-softMuted tracking-wider uppercase">Effortless elegance</span>
+          </div>
+        </div>
+
+        <!-- Polaroid 3 -->
+        <div class="polaroid p-4 rounded-xl cursor-pointer rotate-[-1.5deg] sm:col-span-2 lg:col-span-1 max-w-sm sm:max-w-none mx-auto w-full" onclick="openLightbox('https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80', 'Quiet hours and favorite conversations ☕')">
+          <div class="aspect-[4/5] overflow-hidden rounded-lg bg-gray-100">
+            <img src="/img/WhatsApp Image 2026-09-26 at 8.05.28 PM (1).jpeg" 
+                 alt="Cozy aesthetic" 
+                 class="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                 onerror="this.src='https://placehold.co/600x750/FCEFE9/D48166?text=Photo+3'">
+          </div>
+          <div class="pt-4 pb-1 text-center">
+            <p class="font-handwritten text-2xl text-deepCharcoal">Hours feeling like minutes ☕</p>
+            <span class="text-[10px] text-softMuted tracking-wider uppercase">Unmatched company</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <section id="whatsapp-section" class="glass-card rounded-[2.5rem] p-8 sm:p-12 md:p-16 text-center space-y-8 border border-white/90 shadow-2xl relative overflow-hidden scroll-mt-24">
+      <div class="absolute -top-24 left-1/2 -translate-x-1/2 w-72 h-72 bg-glowAmber/30 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="relative z-10 max-w-2xl mx-auto space-y-4">
+        <span class="text-xs uppercase tracking-widest text-roseGold font-semibold">From The Heart</span>
+        <h2 class="font-serif text-3xl sm:text-5xl font-bold text-deepCharcoal leading-tight">
+          "Some people simply bring sunshine without even trying."
+        </h2>
+        <p class="text-sm sm:text-base text-softMuted leading-relaxed pt-2">
+          Whenever you need a reminder of how appreciated, funny, and genuinely wonderful you are to talk to—just remember someone is always happy to hear from you.
+        </p>
+      </div>
+
+      <!-- Static Sender Sign-off -->
+      <div class="relative z-10 pt-2 pb-2">
+        <p class="font-handwritten text-3xl text-roseGold" id="closing-sender-text">
+          With fondest thoughts, Leo
+        </p>
+      </div>
+
+      <!-- Static WhatsApp Number Display Badge -->
+      <div class="relative z-10 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 border border-waGreen/30 shadow-sm text-xs font-medium text-deepCharcoal">
+        <i data-lucide="phone" class="w-3.5 h-3.5 text-waGreen"></i>
+        <span>WhatsApp: <strong id="display-phone-number" class="text-deepCharcoal font-semibold">+1 234 567 8900</strong></span>
+      </div>
+
+      <!-- WhatsApp CTA Button -->
+      <div class="relative z-10 flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+        <a id="whatsapp-link" 
+           href="#" 
+           target="_blank" 
+           rel="noopener noreferrer"
+           onclick="celebrateConfetti()"
+           class="w-full sm:w-auto px-8 py-4 rounded-full bg-waGreen hover:bg-[#20ba5a] text-white font-semibold text-base shadow-xl shadow-waGreen/30 transition-all transform hover:-translate-y-1 active:translate-y-0 flex items-center justify-center gap-3 animate-pulse-glow group">
+          <i data-lucide="message-circle" class="w-5 h-5 fill-white text-transparent group-hover:scale-110 transition-transform"></i>
+          <span>Send A Quick Reply on WhatsApp</span>
+        </a>
+
+        <button onclick="copyCurrentLink()" class="w-full sm:w-auto px-6 py-4 rounded-full glass-card hover:border-roseGold text-deepCharcoal text-sm font-semibold transition-all flex items-center justify-center gap-2">
+          <i data-lucide="share-2" class="w-4 h-4 text-roseGold"></i>
+          <span>Copy Website Link</span>
+        </button>
+      </div>
+
+      <div class="text-[11px] text-softMuted pt-2">
+        Opens WhatsApp directly with your number and a personalized reply message ready to send.
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Lightbox Modal for Gallery Images -->
+  <div id="lightbox-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4" onclick="closeLightbox(event)">
+    <div class="relative max-w-2xl w-full bg-white rounded-2xl overflow-hidden p-3 shadow-2xl flex flex-col items-center" onclick="event.stopPropagation()">
+      <button onclick="closeLightbox(null)" class="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-white/80 hover:bg-white text-deepCharcoal flex items-center justify-center shadow-md">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+      <img id="lightbox-img" src="" alt="Enlarged Memory" class="w-full max-h-[75vh] object-contain rounded-xl">
+      <p id="lightbox-caption" class="font-handwritten text-2xl text-deepCharcoal mt-4 mb-2"></p>
+    </div>
+  </div>
+
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-deepCharcoal text-white px-5 py-3 rounded-full text-xs font-medium shadow-2xl flex items-center gap-2 transform transition-all duration-300 translate-y-24 opacity-0 pointer-events-none">
+    <i data-lucide="check" class="w-4 h-4 text-glowAmber"></i>
+    <span id="toast-message">Link copied to clipboard!</span>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       STATIC CONFIGURATION - CHANGE YOUR DETAILS HERE:
+       ========================================================================== */
+    const CONFIG = {
+      // Her name (appears in the title, greeting, and WhatsApp note)
+      recipientName: "kajal",
+      
+      // Your name (appears in the closing letter and sign-off)
+      senderName: "mam",
+      
+      // Your WhatsApp Number with Country Code (Digits ONLY, no '+', spaces or dashes)
+      // Example for US: "12345678900", for India: "919876543210", for UK: "447123456789"
+      whatsappPhoneNumber: "919649991202",
+
+      // Display formatted version shown on the badge
+      whatsappDisplayNumber: "+91 96499 91202"
+    };
+
+    // Runtime state
+    let isSoundPlaying = false;
+    let audioCtx = null;
+    let soundInterval = null;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      applyConfigToPage();
+      initAmbientCanvas();
+      lucide.createIcons();
+    });
+
+    function applyConfigToPage() {
+      // 1. Recipient Names
+      document.getElementById('hero-recipient-name').textContent = CONFIG.recipientName;
+      document.getElementById('nav-recipient-name').textContent = CONFIG.recipientName;
+
+      // 2. Sender Signoff
+      document.getElementById('closing-sender-text').textContent = `With fondest thoughts, ${CONFIG.senderName}`;
+
+      // 3. Display Phone Number Badge
+      document.getElementById('display-phone-number').textContent = CONFIG.whatsappDisplayNumber;
+
+      // 4. WhatsApp CTA Button Link & pre-filled warm message
+      const defaultMessage = `Hey ${CONFIG.senderName}! I just saw the website you made for me! 😊✨ It definitely made my day.`;
+      const encodedMsg = encodeURIComponent(defaultMessage);
+      const waButton = document.getElementById('whatsapp-link');
+      waButton.href = `https://wa.me/${CONFIG.whatsappPhoneNumber}?text=${encodedMsg}`;
+    }
+
+    function handleQuizAnswer(buttonElement, feedbackText) {
+      celebrateConfetti();
+      playChime(587.33); // D5
+      const card = buttonElement.closest('.glass-card');
+      const feedback = card.querySelector('.quiz-feedback');
+      if (feedback) {
+        feedback.textContent = feedbackText;
+        feedback.classList.remove('hidden');
+      }
+    }
+
+    // Playful dodging button logic
+    function dodgeButton(btn) {
+      const parent = btn.parentElement;
+      const maxX = parent.clientWidth - btn.clientWidth - 20;
+      const maxY = parent.clientHeight - btn.clientHeight - 10;
+      
+      const randomX = Math.max(10, Math.floor(Math.random() * (maxX || 120)));
+      const randomY = Math.max(5, Math.floor(Math.random() * (maxY || 40)));
+
+      btn.style.position = 'absolute';
+      btn.style.left = `${randomX}px`;
+      btn.style.top = `${randomY}px`;
+
+      const playfulPhrases = [
+        "Are you sure? 🤨",
+        "Nope, try again! 🏃",
+        "Button is shy! 🙈",
+        "You know it's true! ✨"
+      ];
+      const randomPhrase = playfulPhrases[Math.floor(Math.random() * playfulPhrases.length)];
+      btn.querySelector('span').textContent = randomPhrase;
+    }
+
+    function handleSmileConfirm() {
+      celebrateConfetti();
+      playChime(659.25); // E5
+      const feedback = document.getElementById('smile-confirm-feedback');
+      feedback.classList.remove('hidden');
+      
+      const runaway = document.getElementById('runaway-btn');
+      if (runaway) runaway.style.display = 'none';
+    }
+
+    function updateSmileSlider(value) {
+      const scoreBadge = document.getElementById('slider-score-badge');
+      const reactionText = document.getElementById('smile-reaction-text');
+
+      scoreBadge.textContent = `Level: ${value} / 10 😊`;
+
+      if (value < 4) {
+        reactionText.textContent = "Hey now, let me tell another joke until that reaches a 10! 😂";
+      } else if (value < 8) {
+        reactionText.textContent = "A promising start—we're definitely on the right track! 🌟";
+      } else {
+        reactionText.textContent = `"Seeing you happy makes doing this 1000% worth it." ✨`;
+        if (value == 10) {
+          celebrateConfetti(0.3);
+        }
+      }
+    }
+
+    function initAmbientCanvas() {
+      const canvas = document.getElementById('ambient-canvas');
+      const ctx = canvas.getContext('2d');
+      let width, height;
+      let particles = [];
+
+      function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      class Particle {
+        constructor() {
+          this.reset();
+        }
+        reset() {
+          this.x = Math.random() * width;
+          this.y = Math.random() * height;
+          this.radius = Math.random() * 2.2 + 0.8;
+          this.speedY = -(Math.random() * 0.4 + 0.15);
+          this.speedX = (Math.random() - 0.5) * 0.25;
+          this.alpha = Math.random() * 0.5 + 0.2;
+          this.color = Math.random() > 0.4 ? 'rgba(212, 129, 102,' : 'rgba(247, 208, 138,';
+        }
+        update() {
+          this.y += this.speedY;
+          this.x += this.speedX;
+          if (this.y < -10) this.y = height + 10;
+          if (this.x < -10) this.x = width + 10;
+          if (this.x > width + 10) this.x = -10;
+        }
+        draw() {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+          ctx.fillStyle = `${this.color} ${this.alpha})`;
+          ctx.fill();
+        }
+      }
+
+      for (let i = 0; i < 40; i++) {
+        particles.push(new Particle());
+      }
+
+      function animate() {
+        ctx.clearRect(0, 0, width, height);
+        particles.forEach(p => {
+          p.update();
+          p.draw();
+        });
+        requestAnimationFrame(animate);
+      }
+      animate();
+    }
+
+    // Lightbox Modal functions
+    function openLightbox(imgUrl, caption) {
+      const modal = document.getElementById('lightbox-modal');
+      const img = document.getElementById('lightbox-img');
+      const cap = document.getElementById('lightbox-caption');
+
+      img.src = imgUrl;
+      cap.textContent = caption || '';
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox(event) {
+      const modal = document.getElementById('lightbox-modal');
+      modal.classList.add('hidden');
+      document.body.style.overflow = 'auto';
+    }
+
+    // Clipboard and toast functions
+    function copyCurrentLink() {
+      const dummy = document.createElement("input");
+      document.body.appendChild(dummy);
+      dummy.value = window.location.href;
+      dummy.select();
+      document.execCommand("copy");
+      document.body.removeChild(dummy);
+      showToast("Website Link Copied! 💌");
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const text = document.getElementById('toast-message');
+      text.textContent = msg;
+      toast.classList.remove('translate-y-24', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-24', 'opacity-0');
+      }, 3500);
+    }
+
+    function celebrateConfetti(ratio = 1) {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: Math.floor(60 * ratio),
+          spread: 70,
+          origin: { y: 0.65 },
+          colors: ['#D48166', '#F7D08A', '#EAA99B', '#25D366']
+        });
+      }
+    }
+
+    // Subtle audio synthesis
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playChime(freq = 523.25) {
+      try {
+        const ctx = getAudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+
+        gain.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.8);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start();
+        osc.stop(ctx.currentTime + 0.85);
+      } catch (e) {
+        // Audio policy silent catch
+      }
+    }
+
+    function toggleSound() {
+      const icon = document.getElementById('sound-icon');
+      if (!isSoundPlaying) {
+        isSoundPlaying = true;
+        icon.setAttribute('data-lucide', 'volume-2');
+        lucide.createIcons();
+        showToast("Peaceful ambient notes active 🎶");
+
+        const notes = [392.00, 440.00, 523.25, 587.33, 659.25];
+        playChime(notes[2]);
+
+        soundInterval = setInterval(() => {
+          if (!isSoundPlaying) return;
+          const randomNote = notes[Math.floor(Math.random() * notes.length)];
+          playChime(randomNote);
+        }, 3400);
+      } else {
+        isSoundPlaying = false;
+        clearInterval(soundInterval);
+        icon.setAttribute('data-lucide', 'volume-x');
+        lucide.createIcons();
+        showToast("Audio muted");
+      }
+    }
+  </script>
+</body>
+</html>
